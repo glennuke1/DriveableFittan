@@ -35,6 +35,10 @@
       <HintPath>E:\SteamLibrary\steamapps\common\My Summer Car\mods\References\ModApi.dll</HintPath>
       <Private>False</Private>
     </Reference>
+    <Reference Include="ModsShop">
+      <HintPath>E:\SteamLibrary\steamapps\common\My Summer Car\mods\ModsShop.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Xml.Linq" />

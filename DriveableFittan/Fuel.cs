@@ -16,7 +16,7 @@ namespace DriveableFittan
 
         void OnTriggerEnter(Collider collider)
         {
-            if (collider.gameObject.name == "lauaviin")
+            if (collider.gameObject.name == "lauaviin(Clone)")
             {
                 Destroy(collider.gameObject);
                 driveablefittan.fuel += 500;

@@ -1,8 +1,10 @@
-﻿using MSCLoader;
+﻿using ModsShop;
+using MSCLoader;
 using System;
+using System.Collections.Generic;
 using System.IO;
-using UnityEngine;
 using TommoJProductions.ModApi.Attachable;
+using UnityEngine;
 
 namespace DriveableFittan
 {
@@ -29,8 +31,10 @@ namespace DriveableFittan
         GameObject door;
         GameObject fittan_coll10;
         GameObject pivot;
+        GameObject brakePadSet;
+        List<GameObject> lauaviinad = new List<GameObject>();
 
-        public static float fuel = 0;
+        public static float fuel = 8000;
 
         TextMesh[] GUIGearText = new TextMesh[2];
 
@@ -50,6 +54,7 @@ namespace DriveableFittan
         public static Drivetrain drivetrain;
 
         public static Part carburetorPart;
+        public static Part brakePadSetPart;
 
         public override void ModSettings()
         {
@@ -73,13 +78,12 @@ namespace DriveableFittan
             Fittan.transform.position = new Vector3(-191.751f, -0.228f, 1212.873f);
             Fittan.transform.eulerAngles = new Vector3(359.9245f, 116.2305f, 1.9526f);
 
-            if (File.Exists(Application.persistentDataPath + "/fittan.txt"))
+            if (SaveLoad.ValueExists(this, "fittanPos"))
             {
-                string Path = Application.persistentDataPath + "/fittan.txt";
-                string SaveString = File.ReadAllText(Path);
-                string[] SaveContents = SaveString.Split(new[] { SAVE_SEPARATOR }, StringSplitOptions.None);
-                Fittan.transform.position = new Vector3(float.Parse(SaveContents[0]), float.Parse(SaveContents[1]), float.Parse(SaveContents[2]));
-                Fittan.transform.eulerAngles = new Vector3(float.Parse(SaveContents[3]), float.Parse(SaveContents[4]), float.Parse(SaveContents[5]));
+                Fittan.transform.position = SaveLoad.ReadValue<Vector3>(this, "fittanPos");
+                Fittan.transform.eulerAngles = SaveLoad.ReadValue<Vector3>(this, "fittanRot");
+
+                fuel = SaveLoad.ReadValue<float>(this, "fittanFuel");
             }
 
             Fittan.GetComponent<Rigidbody>().isKinematic = true;
@@ -264,9 +268,55 @@ namespace DriveableFittan
             fuelTrigger.transform.localEulerAngles = new Vector3(0, 0, 0);
             BoxCollider col = fuelTrigger.AddComponent<BoxCollider>();
             col.size = new Vector3(1, 0.2f, 0.2f);
+            col.isTrigger = true;
             fuelTrigger.AddComponent<Fuel>();
 
+            GameObject lauaviin = assetBundle.LoadAsset<GameObject>("lauaviin.prefab");
+            GameObject lauaviinDisplay = GameObject.Instantiate(assetBundle.LoadAsset<GameObject>("lauaviin.prefab"));
+            lauaviinDisplay.GetComponent<Rigidbody>().isKinematic = true;
 
+            brakePadSet = GameObject.Instantiate(assetBundle.LoadAsset<GameObject>("breakpadset.prefab"));
+            GameObject brakePadSetDisplay = GameObject.Instantiate(assetBundle.LoadAsset<GameObject>("breakpadset.prefab"));
+            brakePadSetDisplay.GetComponent<Rigidbody>().isKinematic = true;
+            brakePadSet.MakePickable();
+
+            Shop shop = ModsShop.ModsShop.GetShopReference();
+
+            ItemDetails lauaviinItemDetails = shop.CreateShopItem(this, "lauaviin", "Laua Viin", 5.5f, true, AfterPurchased, lauaviin, SpawnMethod.Instantiate);
+            shop.AddDisplayItem(lauaviinItemDetails, lauaviinDisplay, SpawnMethod.Instantiate, Vector3.zero);
+
+            ItemDetails brakePadSetItemDetails = shop.CreateShopItem(this, "brakepadset", "Brake Pad Set", 325f, false, null, brakePadSet, SpawnMethod.SetActive);
+            shop.AddDisplayItem(brakePadSetItemDetails, brakePadSetDisplay, SpawnMethod.Instantiate, Vector3.zero);
+
+            brakePadSet.AddComponent<Part>();
+            brakePadSetPart.initPart(carburetorTriggerData, partSettings);
+            brakePadSetPart.onAssemble += () => 
+            {
+                GameObject.Destroy(brakePadSet);
+            };
+
+            if (SaveLoad.ValueExists(this, "lauaviinadPos"))
+            {
+                List<Vector3> lauaviinadPos = SaveLoad.ReadValueAsList<Vector3>(this, "lauaviinadPos");
+                List<Vector3> lauaviinadRot = SaveLoad.ReadValueAsList<Vector3>(this, "lauaviinadRot");
+
+                for (int i = 0; i < lauaviinadPos.Count; i++)
+                {
+                    GameObject newlauaviin = GameObject.Instantiate(lauaviin);
+                    newlauaviin.transform.position = lauaviinadPos[i];
+                    newlauaviin.transform.eulerAngles = lauaviinadRot[i];
+                    newlauaviin.MakePickable();
+                }
+            }
+        }
+
+        void AfterPurchased(Checkout item)
+        {
+            GameObject boughtItem = item.gameObject;
+
+            boughtItem.MakePickable();
+
+            lauaviinad.Add(boughtItem);
         }
 
         private void Mod_PostLoad()
@@ -418,25 +468,22 @@ namespace DriveableFittan
             }*/
         }
 
-        string SAVE_SEPARATOR = "\n";
-
         void Mod_OnSave()
         {
-            string[] SaveContents = new string[]
+            List<Vector3> lauaviinadPos = new List<Vector3>();
+            List<Vector3> lauaviinadRot = new List<Vector3>();
+
+            foreach (GameObject lauaviin in lauaviinad)
             {
-                ""+Fittan.transform.position.x,
-                ""+Fittan.transform.position.y,
-                ""+Fittan.transform.position.z,
+                lauaviinadPos.Add(lauaviin.transform.position);
+                lauaviinadRot.Add(lauaviin.transform.eulerAngles);
+            }
 
-                ""+Fittan.transform.eulerAngles.x,
-                ""+Fittan.transform.eulerAngles.y,
-                ""+Fittan.transform.eulerAngles.z,
-
-                ""+IgnitionKnob.Instance.carburetorAttached,
-            };
-            string Path = Application.persistentDataPath + "/fittan.txt";
-            string SaveString = string.Join(SAVE_SEPARATOR, SaveContents);
-            File.WriteAllText(Path, SaveString);
+            SaveLoad.WriteValue(this, "lauaviinadPos", lauaviinadPos);
+            SaveLoad.WriteValue(this, "lauaviinadRot", lauaviinadRot);
+            SaveLoad.WriteValue(this, "fittanPos", Fittan.transform.position);
+            SaveLoad.WriteValue(this, "fittanRot", Fittan.transform.eulerAngles);
+            SaveLoad.WriteValue(this, "fittanFuel", fuel);
         }
     }
 }
