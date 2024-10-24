@@ -25,13 +25,14 @@ namespace DriveableFittan
             SetupFunction(Setup.PostLoad, Mod_PostLoad);
         }
 
-        GameObject Fittan;
+        public static GameObject Fittan;
         GameObject leftlight;
         GameObject rightlight;
         GameObject door;
         GameObject fittan_coll10;
         GameObject pivot;
         GameObject brakePadSet;
+        GameObject pedals;
         List<GameObject> lauaviinad = new List<GameObject>();
 
         public static float fuel = 8000;
@@ -42,7 +43,7 @@ namespace DriveableFittan
 
         bool doorclosed = true;
 
-        HutongGames.PlayMaker.FsmFloat wheel;
+        Transform wheel;
         public static HutongGames.PlayMaker.FsmString currentVeh;
 
         Rigidbody doorRB;
@@ -55,6 +56,7 @@ namespace DriveableFittan
 
         public static Part carburetorPart;
         public static Part brakePadSetPart;
+        public static Part pedalsPart;
 
         public override void ModSettings()
         {
@@ -106,7 +108,8 @@ namespace DriveableFittan
             rightlight = Fittan.transform.Find("LightsNPC/BeamsShort/BeamShortAIRight").gameObject;
             door = Fittan.transform.Find("DriverDoors/doorl 1").gameObject;
             fittan_coll10 = Fittan.transform.Find("Colliders/fittan_coll10").gameObject;
-            wheel = Fittan.transform.Find("LOD/Steering/wheel").GetComponent<PlayMakerFSM>().Fsm.GetFsmFloat("Angle2");
+            wheel = Fittan.transform.Find("LOD/Steering/wheel");
+            wheel.GetComponent<PlayMakerFSM>().enabled = false;
             pivot = new GameObject("GetInPivot");
             pivot.transform.parent = Fittan.transform;
             pivot.transform.localPosition = new Vector3(1, -0.3f, 0);
@@ -209,14 +212,30 @@ namespace DriveableFittan
             drivetrain.minRPM = 1500;
 
             TriggerData carburetorTriggerData = TriggerData.createTriggerData("drivableFittanCarburetorTriggerData");
+            TriggerData brakePadSetTriggerData = TriggerData.createTriggerData("drivableFittanBrakePadSetTriggerData");
+            TriggerData pedalsTriggerData = TriggerData.createTriggerData("drivableFittanPedalsTriggerData");
 
+            carburetor.MakePickable();
             carburetorPart = carburetor.AddComponent<Part>();
+
+            pedals = GameObject.Instantiate(GameObject.Find("RCO_RUSCKO12(270)").transform.Find("LOD").Find("Dashboard").Find("Pedals").gameObject);
+            foreach (PlayMakerFSM comp in pedals.GetComponentsInChildren<PlayMakerFSM>())
+            {
+                comp.enabled = false;
+            }
+            pedals.AddComponent<Rigidbody>();
+            pedals.transform.localPosition = new Vector3(54.06244f, -1.28085f, -77.08415f);
+            BoxCollider pedalsCol = pedals.AddComponent<BoxCollider>();
+            pedalsCol.center = new Vector3(0.23f, 0.2f, -0.12f);
+            pedalsCol.size = new Vector3(0.3f, 0.1f, 0.1f);
+            pedalsPart = pedals.AddComponent<Part>();
+            pedals.AddComponent<Pedals>().axisCarController = axisCarController;
 
             PartSettings partSettings = new PartSettings()
             {
                 autoSave = true,
                 assembleType = AssembleType.static_rigidbodyDelete,
-                setPositionRotationOnInitialisePart = true,
+                setPositionRotationOnInitialisePart = false,
                 assemblyTypeJointSettings = new AssemblyTypeJointSettings()
                 {
                     breakForce = float.PositiveInfinity,
@@ -236,6 +255,24 @@ namespace DriveableFittan
                 triggerEuler = Vector3.zero
             };
 
+            TriggerSettings brakePadSetTriggerSettings = new TriggerSettings()
+            {
+                triggerID = "drivableFittanBrakePadSetTriggerData",
+                useTriggerTransformData = true,
+                triggerData = brakePadSetTriggerData,
+                triggerPosition = new Vector3(0.25f, 0.48f, -1.5f),
+                triggerEuler = Vector3.zero
+            };
+
+            TriggerSettings pedalsTriggerSettings = new TriggerSettings()
+            {
+                triggerID = "drivableFittanPedalsTriggerData",
+                useTriggerTransformData = true,
+                triggerData = pedalsTriggerData,
+                triggerPosition = new Vector3(0.04f, 0.215f, 0.57f),
+                triggerEuler = new Vector3(270, 160, 17)
+            };
+
             BoltSettings boltSettings = new BoltSettings()
             {
                 size = BoltSize._8mm,
@@ -249,13 +286,17 @@ namespace DriveableFittan
             };
 
             new Trigger(Fittan.transform.Find("LOD").gameObject, carbTriggerSettings);
+            new Trigger(Fittan.transform.Find("LOD").gameObject, brakePadSetTriggerSettings);
+            new Trigger(Fittan.transform.Find("LOD").gameObject, pedalsTriggerSettings);
 
             carburetorPart.initPart(carburetorTriggerData, partSettings);
 
-            Fittan.transform.Find("wheelFL").GetComponent<Wheel>().brakeFrictionTorque = 110;
-            Fittan.transform.Find("wheelFR").GetComponent<Wheel>().brakeFrictionTorque = 110;
-            Fittan.transform.Find("wheelRL").GetComponent<Wheel>().brakeFrictionTorque = 50;
-            Fittan.transform.Find("wheelRR").GetComponent<Wheel>().brakeFrictionTorque = 50;
+            Bolt[] bolts = new Bolt[1]
+            {
+                new Bolt(boltSettings, new Vector3(0.1425f, 0.335f, -0.03f), new Vector3(90, 0, 0))
+            };
+
+            pedalsPart.initPart(pedalsTriggerData, partSettings, bolts);
 
             GameObject fittanPoster = GameObject.Instantiate(assetBundle.LoadAsset<GameObject>("fittanposer.fbx"));
             fittanPoster.transform.position = new Vector3(-1542.78f, 4.877619f, 1185.38f);
@@ -276,9 +317,17 @@ namespace DriveableFittan
             lauaviinDisplay.GetComponent<Rigidbody>().isKinematic = true;
 
             brakePadSet = GameObject.Instantiate(assetBundle.LoadAsset<GameObject>("breakpadset.prefab"));
+            brakePadSet.transform.position = new Vector3(0, -100, 0);
             GameObject brakePadSetDisplay = GameObject.Instantiate(assetBundle.LoadAsset<GameObject>("breakpadset.prefab"));
             brakePadSetDisplay.GetComponent<Rigidbody>().isKinematic = true;
             brakePadSet.MakePickable();
+
+            brakePadSetPart = brakePadSet.AddComponent<Part>();
+            brakePadSetPart.initPart(brakePadSetTriggerData, partSettings);
+            brakePadSetPart.onAssemble += () =>
+            {
+                brakePadSet.SetActive(false);
+            };
 
             Shop shop = ModsShop.ModsShop.GetShopReference();
 
@@ -287,13 +336,6 @@ namespace DriveableFittan
 
             ItemDetails brakePadSetItemDetails = shop.CreateShopItem(this, "brakepadset", "Brake Pad Set", 325f, false, null, brakePadSet, SpawnMethod.SetActive);
             shop.AddDisplayItem(brakePadSetItemDetails, brakePadSetDisplay, SpawnMethod.Instantiate, Vector3.zero);
-
-            brakePadSet.AddComponent<Part>();
-            brakePadSetPart.initPart(carburetorTriggerData, partSettings);
-            brakePadSetPart.onAssemble += () => 
-            {
-                GameObject.Destroy(brakePadSet);
-            };
 
             if (SaveLoad.ValueExists(this, "lauaviinadPos"))
             {
@@ -308,6 +350,10 @@ namespace DriveableFittan
                     newlauaviin.MakePickable();
                 }
             }
+
+            drivetrain.engineFrictionFactor = 0.32f;
+
+            assetBundle.Unload(false);
         }
 
         void AfterPurchased(Checkout item)
@@ -396,7 +442,7 @@ namespace DriveableFittan
 
             if (currentVeh.Value == "DrivableFittan")
             {
-                wheel.Value = axisCarController.steering;
+                wheel.localEulerAngles = new Vector3(0, axisCarController.steering * -300, 0);
                 if (Input.GetKeyDown("l"))
                 {
                     headlightsOn = !headlightsOn;

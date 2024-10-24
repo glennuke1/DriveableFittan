@@ -83,6 +83,7 @@
     <Compile Include="CoroutineHelper.cs" />
     <Compile Include="Fuel.cs" />
     <Compile Include="IgnitionKnob.cs" />
+    <Compile Include="Pedals.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup />

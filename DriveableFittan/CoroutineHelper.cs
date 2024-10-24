@@ -21,29 +21,33 @@ namespace DriveableFittan
                 yield return new WaitForSeconds(0.5f);
                 if (currentVeh.Value == "DrivableFittan")
                 {
-                    if (ACC.throttleAxis == null)
+                    if (ACC.steerAxis == null)
                     {
-                        ACC.throttleAxis = "Throttle";
-                        ACC.brakeAxis = "Brake";
                         ACC.steerAxis = "Horizontal";
                         ACC.handbrakeAxis = "Handbrake";
-                        ACC.clutchAxis = "Clutch";
                         ACC.shiftUpButton = "ShiftUp";
                         ACC.shiftDownButton = "ShiftDown";
-                        driveablefittan.player.transform.localEulerAngles = new Vector3(0, 0, 3);
+                        driveablefittan.player.transform.localEulerAngles = new Vector3(0, 0, 3.5f);
+                        if (driveablefittan.pedalsPart.installed)
+                        {
+                            ACC.throttleAxis = "Throttle";
+                            ACC.brakeAxis = "Brake";
+                            ACC.clutchAxis = "Clutch";
+                        }
                     }
                 }
                 else
                 {
-                    if (ACC.throttleAxis == "Throttle")
+                    if (ACC.shiftDownButton == "ShiftDown")
                     {
-                        ACC.throttleAxis = null;
-                        ACC.brakeAxis = null;
                         ACC.steerAxis = null;
                         ACC.handbrakeAxis = null;
-                        ACC.clutchAxis = null;
                         ACC.shiftUpButton = null;
                         ACC.shiftDownButton = null;
+
+                        ACC.throttleAxis = null;
+                        ACC.brakeAxis = null;
+                        ACC.clutchAxis = null;
                     }
                 }
             }

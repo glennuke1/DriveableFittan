@@ -101,6 +101,22 @@ namespace DriveableFittan
                         driveablefittan.drivetrain.CV2KW = 0.7358f;
                         starterTime = 3;
                     }
+
+                    if (!driveablefittan.brakePadSetPart.installed)
+                    {
+                        driveablefittan.Fittan.transform.Find("wheelFL").GetComponent<Wheel>().brakeFrictionTorque = 110;
+                        driveablefittan.Fittan.transform.Find("wheelFR").GetComponent<Wheel>().brakeFrictionTorque = 110;
+                        driveablefittan.Fittan.transform.Find("wheelRL").GetComponent<Wheel>().brakeFrictionTorque = 50;
+                        driveablefittan.Fittan.transform.Find("wheelRR").GetComponent<Wheel>().brakeFrictionTorque = 50;
+                    }
+                    else
+                    {
+                        driveablefittan.Fittan.transform.Find("wheelFL").GetComponent<Wheel>().brakeFrictionTorque = 1100;
+                        driveablefittan.Fittan.transform.Find("wheelFR").GetComponent<Wheel>().brakeFrictionTorque = 1100;
+                        driveablefittan.Fittan.transform.Find("wheelRL").GetComponent<Wheel>().brakeFrictionTorque = 560;
+                        driveablefittan.Fittan.transform.Find("wheelRR").GetComponent<Wheel>().brakeFrictionTorque = 560;
+                    }
+
                     if (driveablefittan.fuel < 100)
                     {
                         starterTime = 1000000;
