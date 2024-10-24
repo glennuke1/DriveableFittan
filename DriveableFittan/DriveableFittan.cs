@@ -203,6 +203,8 @@ namespace DriveableFittan
 
             AssetBundle assetBundle = LoadAssets.LoadBundle("DriveableFittan.Assets.fittan.unity3d");
             GameObject carburetor = GameObject.Instantiate(assetBundle.LoadAsset<GameObject>("carburetor.prefab"));
+            carburetor.transform.position = new Vector3(1569.406f, 4.653785f, 736.459f);
+            carburetor.transform.eulerAngles = new Vector3(0, 110, 0);
 
             Fittan.transform.Find("LightsNPC").Find("BeamsShort").gameObject.SetActive(true);
 
@@ -215,7 +217,6 @@ namespace DriveableFittan
             TriggerData brakePadSetTriggerData = TriggerData.createTriggerData("drivableFittanBrakePadSetTriggerData");
             TriggerData pedalsTriggerData = TriggerData.createTriggerData("drivableFittanPedalsTriggerData");
 
-            carburetor.MakePickable();
             carburetorPart = carburetor.AddComponent<Part>();
 
             pedals = GameObject.Instantiate(GameObject.Find("RCO_RUSCKO12(270)").transform.Find("LOD").Find("Dashboard").Find("Pedals").gameObject);
@@ -273,7 +274,7 @@ namespace DriveableFittan
                 triggerEuler = new Vector3(270, 160, 17)
             };
 
-            BoltSettings boltSettings = new BoltSettings()
+            BoltSettings pedalsBoltSettings = new BoltSettings()
             {
                 size = BoltSize._8mm,
                 type = BoltType.nut,
@@ -290,10 +291,9 @@ namespace DriveableFittan
             new Trigger(Fittan.transform.Find("LOD").gameObject, pedalsTriggerSettings);
 
             carburetorPart.initPart(carburetorTriggerData, partSettings);
-
             Bolt[] bolts = new Bolt[1]
             {
-                new Bolt(boltSettings, new Vector3(0.1425f, 0.335f, -0.03f), new Vector3(90, 0, 0))
+                new Bolt(pedalsBoltSettings, new Vector3(0.1425f, 0.335f, -0.03f), new Vector3(90, 0, 0))
             };
 
             pedalsPart.initPart(pedalsTriggerData, partSettings, bolts);
@@ -352,6 +352,11 @@ namespace DriveableFittan
             }
 
             drivetrain.engineFrictionFactor = 0.32f;
+
+            Fittan.transform.Find("PlayerTrigger").GetChild(0).GetComponents<PlayMakerFSM>()[0].GetState("Press return").GetAction<HutongGames.PlayMaker.Actions.SetStringValue>(2).stringValue = "ENTER DRIVING MODE";
+            Fittan.transform.Find("PlayerTrigger").GetChild(0).GetComponents<PlayMakerFSM>()[0].GetState("Press return").GetAction<HutongGames.PlayMaker.Actions.SetBoolValue>(3).boolVariable = PlayMakerGlobals.Instance.Variables.GetFsmBool("GUIdrive");
+            Fittan.transform.Find("PlayerTrigger").GetChild(0).GetComponents<PlayMakerFSM>()[0].GetState("Wait for player").GetAction<HutongGames.PlayMaker.Actions.SetBoolValue>(1).boolVariable = PlayMakerGlobals.Instance.Variables.GetFsmBool("GUIdrive");
+            Fittan.transform.Find("PlayerTrigger").GetChild(0).GetComponents<PlayMakerFSM>()[0].GetState("Player in car").GetAction<HutongGames.PlayMaker.Actions.SetBoolValue>(4).boolVariable = PlayMakerGlobals.Instance.Variables.GetFsmBool("GUIdrive");
 
             assetBundle.Unload(false);
         }
