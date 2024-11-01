@@ -1,8 +1,6 @@
 ﻿using ModsShop;
 using MSCLoader;
-using System;
 using System.Collections.Generic;
-using System.IO;
 using TommoJProductions.ModApi.Attachable;
 using UnityEngine;
 
@@ -42,6 +40,7 @@ namespace DriveableFittan
         Camera cam;
 
         bool doorclosed = true;
+        bool brakePadSetBought;
 
         Transform wheel;
         public static HutongGames.PlayMaker.FsmString currentVeh;
@@ -329,13 +328,19 @@ namespace DriveableFittan
                 brakePadSet.SetActive(false);
             };
 
-            Shop shop = ModsShop.ModsShop.GetShopReference();
+            if (ModLoader.IsModPresent("ModsShop"))
+            {
+                Shop shop = ModsShop.ModsShop.GetShopReference();
 
-            ItemDetails lauaviinItemDetails = shop.CreateShopItem(this, "lauaviin", "Laua Viin", 5.5f, true, AfterPurchased, lauaviin, SpawnMethod.Instantiate);
-            shop.AddDisplayItem(lauaviinItemDetails, lauaviinDisplay, SpawnMethod.Instantiate, Vector3.zero);
+                ItemDetails lauaviinItemDetails = shop.CreateShopItem(this, "lauaviin", "Laua Viin", 5.5f, true, AfterPurchased, lauaviin, SpawnMethod.Instantiate);
+                shop.AddDisplayItem(lauaviinItemDetails, lauaviinDisplay, SpawnMethod.Instantiate, Vector3.zero);
 
-            ItemDetails brakePadSetItemDetails = shop.CreateShopItem(this, "brakepadset", "Brake Pad Set", 325f, false, null, brakePadSet, SpawnMethod.SetActive);
-            shop.AddDisplayItem(brakePadSetItemDetails, brakePadSetDisplay, SpawnMethod.Instantiate, Vector3.zero);
+                if (!SaveLoad.ReadValue<bool>(this, "brakePadSetBought"))
+                {
+                    ItemDetails brakePadSetItemDetails = shop.CreateShopItem(this, "brakepadset", "Brake Pad Set", 325f, false, (Checkout item) => { brakePadSetBought = true; }, brakePadSet, SpawnMethod.SetActive);
+                    shop.AddDisplayItem(brakePadSetItemDetails, brakePadSetDisplay, SpawnMethod.Instantiate, Vector3.zero);
+                }
+            }
 
             if (SaveLoad.ValueExists(this, "lauaviinadPos"))
             {
@@ -347,6 +352,7 @@ namespace DriveableFittan
                     GameObject newlauaviin = GameObject.Instantiate(lauaviin);
                     newlauaviin.transform.position = lauaviinadPos[i];
                     newlauaviin.transform.eulerAngles = lauaviinadRot[i];
+                    lauaviinad.Add(newlauaviin);
                     newlauaviin.MakePickable();
                 }
             }
@@ -521,20 +527,28 @@ namespace DriveableFittan
 
         void Mod_OnSave()
         {
+            SaveLoad.WriteValue(this, "fittanPos", Fittan.transform.position);
+            SaveLoad.WriteValue(this, "fittanRot", Fittan.transform.eulerAngles);
+            SaveLoad.WriteValue(this, "fittanFuel", fuel);
+            SaveLoad.WriteValue(this, "brakePadSetBought", brakePadSetBought);
+
             List<Vector3> lauaviinadPos = new List<Vector3>();
             List<Vector3> lauaviinadRot = new List<Vector3>();
 
             foreach (GameObject lauaviin in lauaviinad)
             {
-                lauaviinadPos.Add(lauaviin.transform.position);
-                lauaviinadRot.Add(lauaviin.transform.eulerAngles);
+                if (lauaviin.transform)
+                {
+                    lauaviinadPos.Add(lauaviin.transform.position);
+                    lauaviinadRot.Add(lauaviin.transform.eulerAngles);
+                }
             }
 
-            SaveLoad.WriteValue(this, "lauaviinadPos", lauaviinadPos);
-            SaveLoad.WriteValue(this, "lauaviinadRot", lauaviinadRot);
-            SaveLoad.WriteValue(this, "fittanPos", Fittan.transform.position);
-            SaveLoad.WriteValue(this, "fittanRot", Fittan.transform.eulerAngles);
-            SaveLoad.WriteValue(this, "fittanFuel", fuel);
+            if (lauaviinadPos.Count > 0)
+            {
+                SaveLoad.WriteValue(this, "lauaviinadPos", lauaviinadPos);
+                SaveLoad.WriteValue(this, "lauaviinadRot", lauaviinadRot);
+            }
         }
     }
 }
