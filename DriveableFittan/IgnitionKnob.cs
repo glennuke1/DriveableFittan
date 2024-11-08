@@ -111,13 +111,13 @@ namespace DriveableFittan
                     }
                     else
                     {
-                        driveablefittan.Fittan.transform.Find("wheelFL").GetComponent<Wheel>().brakeFrictionTorque = 1100;
-                        driveablefittan.Fittan.transform.Find("wheelFR").GetComponent<Wheel>().brakeFrictionTorque = 1100;
-                        driveablefittan.Fittan.transform.Find("wheelRL").GetComponent<Wheel>().brakeFrictionTorque = 560;
-                        driveablefittan.Fittan.transform.Find("wheelRR").GetComponent<Wheel>().brakeFrictionTorque = 560;
+                        driveablefittan.Fittan.transform.Find("wheelFL").GetComponent<Wheel>().brakeFrictionTorque = 700;
+                        driveablefittan.Fittan.transform.Find("wheelFR").GetComponent<Wheel>().brakeFrictionTorque = 700;
+                        driveablefittan.Fittan.transform.Find("wheelRL").GetComponent<Wheel>().brakeFrictionTorque = 360;
+                        driveablefittan.Fittan.transform.Find("wheelRR").GetComponent<Wheel>().brakeFrictionTorque = 360;
                     }
 
-                    if (driveablefittan.fuel < 100)
+                    if (driveablefittan.fuel < 10)
                     {
                         starterTime = 1000000;
                     }

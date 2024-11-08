@@ -1,5 +1,4 @@
-﻿using MSCLoader;
-using System.Collections;
+﻿using System.Collections;
 using UnityEngine;
 
 namespace DriveableFittan
@@ -41,7 +40,7 @@ namespace DriveableFittan
                         ACC.brakeAxis = null;
                         ACC.clutchAxis = null;
                         ACC.steerAxis = null;
-                        ACC.handbrakeAxis = null;
+                        ACC.handbrakeAxis = "";
                         ACC.shiftUpButton = null;
                         ACC.shiftDownButton = null;
                     }

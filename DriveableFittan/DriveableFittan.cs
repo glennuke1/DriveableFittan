@@ -1,7 +1,7 @@
-﻿using ModsShop;
+﻿using eightyseven.ModApi.Attachable;
+using ModsShop;
 using MSCLoader;
 using System.Collections.Generic;
-using TommoJProductions.ModApi.Attachable;
 using UnityEngine;
 
 namespace DriveableFittan
@@ -12,7 +12,7 @@ namespace DriveableFittan
         public override string Name => "Drivable Fittan Revamped"; //You mod name
         public override string Author => "glen"; //Your Username
         public override string Version => "1.0"; //Version
-        public override string Description => "Make your favorite green car drivable"; //Short description of your mod
+        public override string Description => "Abandoned yellow Fittan"; //Short description of your mod
 
         public override void ModSetup()
         {
@@ -46,7 +46,6 @@ namespace DriveableFittan
         public static HutongGames.PlayMaker.FsmString currentVeh;
 
         Rigidbody doorRB;
-        Rigidbody fittanRB;
         AxisCarController axisCarController;
 
         public static GameObject player;
@@ -89,6 +88,11 @@ namespace DriveableFittan
 
             Fittan.GetComponent<Rigidbody>().isKinematic = true;
             Fittan.GetComponent<Drivetrain>().enabled = false;
+
+            Fittan.transform.Find("LOD").Find("EngineSound").gameObject.SetActive(false);
+            Fittan.transform.Find("Driver").gameObject.SetActive(false);
+            Fittan.transform.Find("LightsNPC").GetComponent<PlayMakerFSM>().enabled = false;
+            Fittan.transform.Find("CrashEvent").gameObject.SetActive(false);
         }
 
         private void Mod_OnLoad()
@@ -113,12 +117,20 @@ namespace DriveableFittan
             pivot.transform.parent = Fittan.transform;
             pivot.transform.localPosition = new Vector3(1, -0.3f, 0);
             GameObject.Destroy(Fittan.GetComponent<MobileCarController>());
-
-            fittanRB = Fittan.GetComponent<Rigidbody>();
+            GameObject.Destroy(Fittan.transform.Find("LightsNPC/BrakeLights").gameObject);
 
             Fittan.transform.Find("fittan_body").GetComponent<MeshRenderer>().material.SetColor("_Color", new Color(1, 0.7f, 0));
             Fittan.transform.Find("DriverDoors").GetChild(0).GetChild(0).Find("door").GetComponent<MeshRenderer>().material.SetColor("_Color", new Color(1, 0.7f, 0));
             Fittan.transform.Find("DriverDoors").GetChild(1).GetChild(0).Find("door").GetComponent<MeshRenderer>().material.SetColor("_Color", new Color(1, 0.7f, 0));
+
+            Fittan.transform.Find("fittan_body").gameObject.AddComponent<Paint>();
+
+            if (SaveLoad.ValueExists(this, "fittanColor"))
+            {
+                Fittan.transform.Find("fittan_body").GetComponent<MeshRenderer>().material.SetColor("_Color", SaveLoad.ReadValue<Color>(this, "fittanColor"));
+                Fittan.transform.Find("DriverDoors").GetChild(0).GetChild(0).Find("door").GetComponent<MeshRenderer>().material.SetColor("_Color", SaveLoad.ReadValue<Color>(this, "fittanColor"));
+                Fittan.transform.Find("DriverDoors").GetChild(1).GetChild(0).Find("door").GetComponent<MeshRenderer>().material.SetColor("_Color", SaveLoad.ReadValue<Color>(this, "fittanColor"));
+            }
 
             drivetrain = Fittan.GetComponent<Drivetrain>();
 
@@ -207,7 +219,15 @@ namespace DriveableFittan
 
             Fittan.transform.Find("LightsNPC").Find("BeamsShort").gameObject.SetActive(true);
 
-            Fittan.transform.Find("Colliders").Find("fittan_coll5").gameObject.SetActive(false);
+            Fittan.transform.Find("PlayerTrigger").GetComponent<BoxCollider>().center = new Vector3(0, 0.06f, -1f);
+            Fittan.transform.Find("PlayerTrigger").GetComponent<BoxCollider>().size = new Vector3(1.3f, 1.1f, 1.6f);
+
+            GameObject.Destroy(Fittan.transform.Find("Colliders").Find("coll"));
+
+            Fittan.transform.Find("Colliders").Find("fittan_coll5").gameObject.layer = LayerMask.NameToLayer("HingedObjects");
+            Fittan.transform.Find("Colliders").Find("fittan_coll5").gameObject.tag = "DontPickThis";
+            Fittan.transform.Find("Colliders").Find("fittan_coll5").gameObject.name = "coll";
+
             Fittan.transform.Find("LOD").Find("PlayerFunctions").Find("PlayerColliders").Find("PlayerCollider 7").gameObject.SetActive(false);
 
             drivetrain.minRPM = 1500;
@@ -364,7 +384,45 @@ namespace DriveableFittan
             Fittan.transform.Find("PlayerTrigger").GetChild(0).GetComponents<PlayMakerFSM>()[0].GetState("Wait for player").GetAction<HutongGames.PlayMaker.Actions.SetBoolValue>(1).boolVariable = PlayMakerGlobals.Instance.Variables.GetFsmBool("GUIdrive");
             Fittan.transform.Find("PlayerTrigger").GetChild(0).GetComponents<PlayMakerFSM>()[0].GetState("Player in car").GetAction<HutongGames.PlayMaker.Actions.SetBoolValue>(4).boolVariable = PlayMakerGlobals.Instance.Variables.GetFsmBool("GUIdrive");
 
+            GameObject fuelGauge = GameObject.Instantiate(assetBundle.LoadAsset<GameObject>("fuel_gauge.prefab"));
+            fuelGauge.name = "Fuel Gauge(Clone)";
+            fuelGauge.transform.position = new Vector3(54.06244f, 1.28085f, -77.08415f);
+            Part fuelGaugePart = fuelGauge.AddComponent<Part>();
+
+            TriggerData fuelGaugeTriggerData = TriggerData.createTriggerData("fuelGaugeTriggerData");
+
+            TriggerSettings fuelGaugeTriggerSettings = new TriggerSettings()
+            {
+                triggerID = "fuelGaugeTriggerData",
+                useTriggerTransformData = true,
+                triggerData = fuelGaugeTriggerData,
+                triggerPosition = new Vector3(-0.5f, 0.47f, 0.6f),
+                triggerEuler = new Vector3(342, 180, 90)
+            };
+
+            new Trigger(Fittan.transform.Find("LOD").gameObject, fuelGaugeTriggerSettings);
+
+            fuelGaugePart.initPart(fuelGaugeTriggerData, partSettings);
+
+            fuelGauge.transform.GetChild(0).gameObject.AddComponent<FuelGauge>();
+
             assetBundle.Unload(false);
+
+            GameObject.Destroy(Fittan.transform.Find("LOD").GetChild(11).gameObject);
+            GameObject.Destroy(Fittan.transform.Find("LOD").GetChild(12).gameObject);
+
+            GameObject fittan_coll11 = new GameObject("coll");
+            fittan_coll11.transform.parent = Fittan.transform.Find("Colliders");
+            BoxCollider fittan_coll11_col = fittan_coll11.AddComponent<BoxCollider>();
+            fittan_coll11_col.center = new Vector3(0, -0.05227995f, -0.10056f);
+            fittan_coll11_col.size = new Vector3(1, 0.1277891f, 0.4884337f);
+            fittan_coll11.layer = LayerMask.NameToLayer("HingedObjects");
+            fittan_coll11.transform.localPosition = Vector3.zero;
+            fittan_coll11.transform.localEulerAngles = Vector3.zero;
+            fittan_coll11.tag = "DontPickThis";
+
+            Fittan.AddComponent<Handbrake>();
+            Fittan.AddComponent<SteerLimit>();
         }
 
         void AfterPurchased(Checkout item)
@@ -386,14 +444,13 @@ namespace DriveableFittan
 
         bool headlightsOn;
         bool usingDoor = true;
+        public static RaycastHit raycastHit;
 
         private void Mod_Update()
         {
-            RaycastHit hit;
-
-            if (Physics.Raycast(cam.transform.position, cam.transform.forward, out hit, 1f))
+            if (Physics.Raycast(cam.transform.position, cam.transform.forward, out raycastHit, 1f))
             {
-                if (hit.collider == door.GetComponentInChildren<Collider>())
+                if (raycastHit.collider == door.GetComponentInChildren<Collider>())
                 {
                     PlayMakerGlobals.Instance.Variables.GetFsmBool("GUIuse").Value = true;
                     if (Input.GetMouseButtonDown(0))
@@ -549,6 +606,8 @@ namespace DriveableFittan
                 SaveLoad.WriteValue(this, "lauaviinadPos", lauaviinadPos);
                 SaveLoad.WriteValue(this, "lauaviinadRot", lauaviinadRot);
             }
+
+            SaveLoad.WriteValue(this, "fittanColor", Fittan.transform.Find("fittan_body").GetComponent<MeshRenderer>().material.GetColor("_Color"));
         }
     }
 }

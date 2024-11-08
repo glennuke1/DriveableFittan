@@ -19,7 +19,7 @@ namespace DriveableFittan
             if (collider.gameObject.name == "lauaviin(Clone)")
             {
                 Destroy(collider.gameObject);
-                driveablefittan.fuel += 500;
+                driveablefittan.fuel += 2000;
             }
         }
 
