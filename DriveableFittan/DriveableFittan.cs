@@ -14,15 +14,6 @@ namespace DriveableFittan
         public override string Version => "1.0"; //Version
         public override string Description => "Abandoned yellow Fittan"; //Short description of your mod
 
-        public override void ModSetup()
-        {
-            SetupFunction(Setup.PreLoad, Mod_PreLoad);
-            SetupFunction(Setup.OnLoad, Mod_OnLoad);
-            SetupFunction(Setup.Update, Mod_Update);
-            SetupFunction(Setup.OnSave, Mod_OnSave);
-            SetupFunction(Setup.PostLoad, Mod_PostLoad);
-        }
-
         public static GameObject Fittan;
         GameObject leftlight;
         GameObject rightlight;
@@ -56,7 +47,17 @@ namespace DriveableFittan
         public static Part brakePadSetPart;
         public static Part pedalsPart;
 
-        public override void ModSettings()
+        public override void ModSetup()
+        {
+            SetupFunction(Setup.PreLoad, Mod_PreLoad);
+            SetupFunction(Setup.OnLoad, Mod_OnLoad);
+            SetupFunction(Setup.Update, Mod_Update);
+            SetupFunction(Setup.OnSave, Mod_OnSave);
+            SetupFunction(Setup.PostLoad, Mod_PostLoad);
+            SetupFunction(Setup.ModSettings, Mod_Settings);
+        }
+
+        public void Mod_Settings()
         {
             Settings.AddButton(this, "playertp", "Teleport Player to Fittan", totp);
             Settings.AddButton(this, "fittantp", "Teleport Fittan to player", tpto);
@@ -117,7 +118,6 @@ namespace DriveableFittan
             pivot.transform.parent = Fittan.transform;
             pivot.transform.localPosition = new Vector3(1, -0.3f, 0);
             GameObject.Destroy(Fittan.GetComponent<MobileCarController>());
-            GameObject.Destroy(Fittan.transform.Find("LightsNPC/BrakeLights").gameObject);
 
             Fittan.transform.Find("fittan_body").GetComponent<MeshRenderer>().material.SetColor("_Color", new Color(1, 0.7f, 0));
             Fittan.transform.Find("DriverDoors").GetChild(0).GetChild(0).Find("door").GetComponent<MeshRenderer>().material.SetColor("_Color", new Color(1, 0.7f, 0));
@@ -150,10 +150,6 @@ namespace DriveableFittan
 
             drivetrain.enabled = false;
 
-            Fittan.transform.Find("LOD").Find("EngineSound").gameObject.SetActive(false);
-            Fittan.transform.Find("Driver").gameObject.SetActive(false);
-            Fittan.transform.Find("LightsNPC").GetComponent<PlayMakerFSM>().enabled = false;
-            Fittan.transform.Find("CrashEvent").gameObject.SetActive(false);
             fittan_coll10.SetActive(false);
             HingeJoint hingeJoint = door.AddComponent<HingeJoint>();
             hingeJoint.connectedBody = Fittan.GetComponent<Rigidbody>();
